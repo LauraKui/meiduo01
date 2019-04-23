@@ -15,8 +15,8 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
-from .views import Index
+from .views import ImageCodeView
 urlpatterns = [
-    url(r'^$', Index.as_view()),
+    url(r'^image_codes/(?P<uuid>[\w-]+)/$', ImageCodeView.as_view()),
 
 ]

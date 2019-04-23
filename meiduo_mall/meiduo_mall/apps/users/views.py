@@ -1,13 +1,13 @@
 from django.shortcuts import render, redirect
 from django.views.generic import View
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.contrib.auth import login
 import re
 from .models import User
 from django.db import DatabaseError
 import logging
 from django.urls import reverse
-
+from meiduo_mall.utils.response_code import RETCODE
 # Create your views here.
 
 # 创建日志输出器对象
@@ -64,3 +64,15 @@ class Register(View):
         # 登陆成功重定向到首页
         return redirect(reverse("contents:index"))
 
+
+class CheckUserView(View):
+    def get(self, request, username):
+
+        count = User.objects.filter(username=username).count()
+        return JsonResponse({'count': count, 'code': RETCODE.OK, 'errmsg': 'OK'})
+
+
+class CheckMobileView(View):
+    def get(self, request, mobile):
+        count = User.objects.filter(mobile=mobile).count()
+        return JsonResponse({'count': count, 'code': RETCODE.OK, 'errmsg': 'OK'})
