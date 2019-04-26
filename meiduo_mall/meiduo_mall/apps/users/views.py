@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect
 from django.views.generic import View
 from django.http import HttpResponseForbidden, JsonResponse
-from django.contrib.auth import login
+from django.contrib.auth import login, authenticate
 import re
 from .models import User
 from django.db import DatabaseError
+from django_redis import get_redis_connection
 import logging
 from django.urls import reverse
 from meiduo_mall.utils.response_code import RETCODE
@@ -44,6 +45,13 @@ class Register(View):
         # 判断手机号
         if not re.match(r'^1[3456789]\d{9}$', mobile):
             return HttpResponseForbidden('请输入有效手机号')
+        # 判断短信验证码
+        redis_conn = get_redis_connection('verify_code')
+        sms_code_server = redis_conn.get('sms: %s' % mobile)
+        if sms_code_server is None or sms_code != sms_code_server.decode():
+            return HttpResponseForbidden('短信验证码输入不正确')
+
+
         try:
             # 创建用户，使用User模型类里面的create_user()方法创建，里面封装了set_password()方法加密密码
             user = User.objects.create_user(
@@ -76,3 +84,28 @@ class CheckMobileView(View):
     def get(self, request, mobile):
         count = User.objects.filter(mobile=mobile).count()
         return JsonResponse({'count': count, 'code': RETCODE.OK, 'errmsg': 'OK'})
+
+
+class LoginView(View):
+    def get(self, request):
+        return render(request, "login.html")
+
+    def post(self, request):
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        remembered = request.POST.get('remembered')
+
+        if not all([username, password]):
+            return HttpResponseForbidden("缺少传入参数")
+        user = authenticate(username=username, password=password)
+        if user is None:
+            return render(request, 'login.html', {'account_errmsg': '用户名或密码错误'})
+
+        login(request, user)
+
+        if remembered != 'on':
+            request.session.set_expiry(0)
+
+        return redirect(reverse("contents:index"))
+
+

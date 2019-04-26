@@ -15,10 +15,11 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
-from .views import Register, CheckUserView, CheckMobileView
+from .views import Register, CheckUserView, CheckMobileView, LoginView
 urlpatterns = [
     url(r'^register/', Register.as_view(), name="register"),
-    url(r'^usernames/(?P<username>[a-zA-Z0-9_-]{5,20})/count/$', CheckUserView.as_view()),
-    url(r'^mobiles/(?P<mobile>1[3-9]\d{9})/count/$', CheckMobileView.as_view()),
+    url(r'^usernames/(?P<username>[a-zA-Z0-9_-]{5,20})/count/$', CheckUserView.as_view(), name='checkusername'),
+    url(r'^mobiles/(?P<mobile>1[3-9]\d{9})/count/$', CheckMobileView.as_view(), name='checkmobile'),
+    url(r'^login/$', LoginView.as_view(), name="login"),
 
         ]

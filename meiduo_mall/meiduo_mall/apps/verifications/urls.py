@@ -15,8 +15,9 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
-from .views import ImageCodeView
+from .views import ImageCodeView, SmsCodeView
 urlpatterns = [
-    url(r'^image_codes/(?P<uuid>[\w-]+)/$', ImageCodeView.as_view()),
+    url(r'^image_codes/(?P<uuid>[\w-]+)/$', ImageCodeView.as_view(), name='image_code'),
+    url(r'^sms_codes/(?P<mobile>1[3-9]\d{9})/$', SmsCodeView.as_view(), name='sms_code'),
 
 ]
