@@ -15,16 +15,9 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
-from .views import Register, CheckUserView, CheckMobileView, LoginView, LogoutView, UserInfo
-from . import views
+from .views import OauthQQ, OauthCallBack
 urlpatterns = [
-    url(r'^register/', Register.as_view(), name="register"),
-    url(r'^usernames/(?P<username>[a-zA-Z0-9_-]{5,20})/count/$', CheckUserView.as_view(), name='checkusername'),
-    url(r'^mobiles/(?P<mobile>1[3-9]\d{9})/count/$', CheckMobileView.as_view(), name='checkmobile'),
-    url(r'^login/$', LoginView.as_view(), name="login"),
-    url(r'^logout/$', LogoutView.as_view(), name="logout"),
-    url(r'^info/$', UserInfo.as_view(), name="info"),
-    url(r'^emails/$', views.EmailView.as_view(), name='email'),
-    url(r'^emails/verification/$', views.VerifyEmailView.as_view()),
+    url(r'^qq/authorization/$', OauthQQ.as_view(), name='qq'),
+    url(r'^oauth_callback/$', OauthCallBack.as_view(), name='callback'),
 
-        ]
+]
