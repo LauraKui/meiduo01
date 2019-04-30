@@ -31,7 +31,7 @@ def get_verify_url(user):
     serializer = Serializer(secret_key=settings.SECRET_KEY, expires_in=3600)
     data = {'user_id': user.id, 'user_email': user.email}
     data_dealed = serializer.dumps(data).decode()
-    verify_url = settings.EMAIL_VERIFY_URL + '?token' + data_dealed
+    verify_url = settings.EMAIL_VERIFY_URL + '?token=' + data_dealed
     return verify_url
 
 

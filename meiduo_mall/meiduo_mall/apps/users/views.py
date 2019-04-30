@@ -6,7 +6,6 @@ from django.contrib.auth import login, authenticate, logout, mixins
 from django_redis import get_redis_connection
 from django.db import DatabaseError
 from django.core.mail import send_mail
-
 import re
 import logging
 import json
@@ -16,6 +15,8 @@ from .models import User
 from meiduo_mall.utils.response_code import RETCODE
 from celery_tasks.email.tasks import send_verify_mail
 from .utils import get_verify_url, check_token
+from meiduo_mall.utils.view import LoginRequiredView
+from .models import Address
 # Create your views here.
 
 # 创建日志输出器对象
@@ -184,3 +185,169 @@ class VerifyEmailView(View):
 
         # 响应
         return redirect('/info/')
+
+
+class AddressView(LoginRequiredView):
+    """查数据也在此类视图中"""
+    def get(self, request):
+        user = request.user
+        user_addr = Address.objects.filter(user=user, is_deleted=False)
+        addr_list = []
+        for addr in user_addr:
+            addr_dict = {
+                'id': addr.id,
+                'user': addr.user,
+                'title': addr.title,
+                'receiver': addr.receiver,
+                'province': addr.province.name,
+                'province_id': addr.province_id,
+                'city': addr.city.name,
+                'city_id': addr.city_id,
+                'district': addr.district.name,
+                'district_id': addr.district_id,
+                'place': addr.place,
+                'mobile': addr.mobile,
+                'tel': addr.tel,
+                'email': addr.email
+            }
+            addr_list.append(addr_dict)
+        content = {'addresses': addr_list}
+        return render(request, 'user_center_site.html', content)
+
+
+class CreateAddrView(LoginRequiredView):
+    def post(self, request):
+
+        user = request.user
+        count = Address.objects.filter(is_deleted=False, user=user).count()
+        if count >= 20:
+            return HttpResponseForbidden("用户收货地址达到上限")
+        data_dict = json.loads(request.body.decode())
+        title = data_dict.get('title')
+        receiver = data_dict.get('receiver')
+        province_id = data_dict.get('province_id')
+        city_id = data_dict.get('city_id')
+        district_id = data_dict.get('district_id')
+        place = data_dict.get('place')
+        mobile = data_dict.get('mobile')
+        tel = data_dict.get('tel')
+        email = data_dict.get('email')
+
+        if not all([receiver, province_id, city_id, place, mobile, title]):
+            return HttpResponseForbidden("缺少必传参数")
+        if not re.match(r'^1[3-9]\d{9}$', mobile):
+            return HttpResponseForbidden("请输入有效电话号码")
+        if tel:
+            if not re.match(r'^(0[0-9]{2,3}-)?([2-9][0-9]{6,7})+(-[0-9]{1,4})?$', tel):
+                return HttpResponseForbidden('参数tel有误')
+        if email:
+            if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+                return HttpResponseForbidden('参数email有误')
+
+        try:
+            address = Address.objects.create(
+                user=user,
+                title=title,
+                receiver=receiver,
+                province_id=province_id,
+                city_id=city_id,
+                district_id=district_id,
+                place=place,
+                mobile=mobile,
+                tel=tel,
+                email=email
+            )
+        except Exception:
+            return HttpResponseForbidden("地址错误")
+        address_dict = {
+            'id': address.id,
+            # 'user': address.user,
+            'title': address.title,
+            'receiver': address.receiver,
+            'province': address.province.name,
+            'province_id': address.province_id,
+            'city': address.city.name,
+            'city_id': address.city_id,
+            'district': address.district.name,
+            'district_id': address.district_id,
+            'place': address.place,
+            'mobile': address.mobile,
+            'tel': address.tel,
+            'email': address.email
+        }
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'address': address_dict})
+
+
+class ChangeAddrView(LoginRequiredView):
+    """修改和删除数据库"""
+    def put(self, request, address_id):
+        """修改"""
+        user = request.user
+        try:
+            address = Address.objects.get(id=address_id)
+        except Address.DoesNotExist:
+            return HttpResponseForbidden("没有此地址")
+        data = json.loads(request.body.decode())
+
+        title = data.get('title')
+        receiver = data.get('receiver')
+        province_id = data.get('province_id')
+        city_id = data.get('city_id')
+        district_id = data.get('district_id')
+        place = data.get('place')
+        mobile = data.get('mobile')
+        tel = data.get('tel')
+        email = data.get('email')
+
+        if not all([receiver, province_id, city_id, place, mobile, title]):
+            return HttpResponseForbidden("缺少必传参数")
+        if not re.match(r'^1[3-9]\d{9}$', mobile):
+            return HttpResponseForbidden("请输入有效电话号码")
+        if tel:
+            if not re.match(r'^(0[0-9]{2,3}-)?([2-9][0-9]{6,7})+(-[0-9]{1,4})?$', tel):
+                return HttpResponseForbidden('参数tel有误')
+        if email:
+            if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+                return HttpResponseForbidden('参数email有误')
+
+        Address.objects.filter(id=address_id).update(
+            title=title,
+            receiver=receiver,
+            province_id=province_id,
+            city_id=city_id,
+            district_id=district_id,
+            place=place,
+            mobile=mobile,
+            tel=tel,
+            email=email
+        )
+
+        address =Address.objects.get(user=user)
+        address_dict = {
+            'id': address.id,
+            'title': address.title,
+            'receiver': address.receiver,
+            'province': address.province.name,
+            'province_id': address.province_id,
+            'city': address.city.name,
+            'city_id': address.city_id,
+            'district': address.district.name,
+            'district_id': address.district_id,
+            'place': address.place,
+            'mobile': address.mobile,
+            'tel': address.tel,
+            'email': address.email
+        }
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'address': address_dict})
+
+    def delete(self, request, address_id):
+        """删除"""
+        try:
+            address = Address.objects.get(id=address_id)
+        except Address.DoesNotExist:
+            return HttpResponseForbidden("没有此地址")
+
+        address.is_deleted = True
+        address.save()
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
