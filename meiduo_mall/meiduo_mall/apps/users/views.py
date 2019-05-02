@@ -191,27 +191,28 @@ class AddressView(LoginRequiredView):
     """查数据也在此类视图中"""
     def get(self, request):
         user = request.user
-        user_addr = Address.objects.filter(user=user, is_deleted=False)
+        user_addr = Address.objects.filter(user_id=user.id, is_deleted=False)
         addr_list = []
         for addr in user_addr:
             addr_dict = {
                 'id': addr.id,
-                'user': addr.user,
+                # 'user': addr.user,
                 'title': addr.title,
                 'receiver': addr.receiver,
-                'province': addr.province.name,
                 'province_id': addr.province_id,
-                'city': addr.city.name,
+                'province': addr.province.name,
                 'city_id': addr.city_id,
-                'district': addr.district.name,
+                'city': addr.city.name,
                 'district_id': addr.district_id,
+                'district': addr.district.name,
+
                 'place': addr.place,
                 'mobile': addr.mobile,
                 'tel': addr.tel,
                 'email': addr.email
             }
             addr_list.append(addr_dict)
-        content = {'addresses': addr_list}
+        content = {'addresses': addr_list, 'default_address_id': user.default_address}
         return render(request, 'user_center_site.html', content)
 
 
@@ -257,6 +258,9 @@ class CreateAddrView(LoginRequiredView):
                 tel=tel,
                 email=email
             )
+            if user.default_address is None:
+                user.default_address = address
+                user.save()
         except Exception:
             return HttpResponseForbidden("地址错误")
         address_dict = {
@@ -282,7 +286,7 @@ class ChangeAddrView(LoginRequiredView):
     """修改和删除数据库"""
     def put(self, request, address_id):
         """修改"""
-        user = request.user
+        # user = request.user
         try:
             address = Address.objects.get(id=address_id)
         except Address.DoesNotExist:
@@ -322,7 +326,7 @@ class ChangeAddrView(LoginRequiredView):
             email=email
         )
 
-        address =Address.objects.get(user=user)
+        address =Address.objects.get(id=address_id)
         address_dict = {
             'id': address.id,
             'title': address.title,
@@ -351,3 +355,27 @@ class ChangeAddrView(LoginRequiredView):
         address.save()
         return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
 
+
+class DefaultAddrView(LoginRequiredView):
+    def put(self, request, address_id):
+        user = request.user
+        try:
+            address = Address.objects.get(id=address_id)
+        except Address.DoesNotExist:
+            return HttpResponseForbidden("没有此地址")
+        user.default_address = address
+        user.save()
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
+
+class TitleChangeView(LoginRequiredView):
+    def put(self, request, address_id):
+        try:
+            address = Address.objects.get(id=address_id)
+        except Address.DoesNotExist:
+            return HttpResponseForbidden("没有此地址")
+        data = json.loads(request.body.decode())
+        title = data.get('title')
+        address.title = title
+        address.save()
+        return JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
