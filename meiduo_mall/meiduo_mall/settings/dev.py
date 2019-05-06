@@ -230,4 +230,4 @@ EMAIL_VERIFY_URL = 'http://www.meiduo.site:8000/emails/verification/'
 
 DEFAULT_FILE_STORAGE = 'meiduo_mall.utils.fastdfs.fdfs_storage.Restorage'
 
-FDFS_BASE_URL = 'http://192.168.110.131:8888/'
+FDFS_BASE_URL = 'http://192.168.110.132:8888/'
