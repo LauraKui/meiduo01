@@ -227,3 +227,7 @@ EMAIL_HOST_PASSWORD = '15960374205ly' # 邮箱授权时获得的密码，非注�
 EMAIL_FROM = '美多商城<laurakui@163.com>' # 发件人抬头
 
 EMAIL_VERIFY_URL = 'http://www.meiduo.site:8000/emails/verification/'
+
+DEFAULT_FILE_STORAGE = 'meiduo_mall.utils.fastdfs.fdfs_storage.Restorage'
+
+FDFS_BASE_URL = 'http://192.168.110.131:8888/'

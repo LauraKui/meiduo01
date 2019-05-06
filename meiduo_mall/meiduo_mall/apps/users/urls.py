@@ -30,6 +30,6 @@ urlpatterns = [
     url(r'^addresses/$', views.AddressView.as_view(), name='address'),
     url(r'^addresses/(?P<address_id>\d+)/$', views.ChangeAddrView.as_view(), name='change'),
     url(r'^addresses/(?P<address_id>\d+)/default/$', views.DefaultAddrView.as_view(), name='default'),
-    url(r'^addresses/(?P<address_id>\d+)/default/$', views.TitleChangeView.as_view(), name='title'),
+    url(r'^addresses/(?P<address_id>\d+)/title/$', views.TitleChangeView.as_view(), name='title'),
 
         ]

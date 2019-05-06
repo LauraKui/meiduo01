@@ -1,8 +1,39 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.generic import View
-# Create your views here.
+
+from .models import ContentCategory, Content
+from .utils import get_categories
+
 
 class Index(View):
     def get(self, request):
-        return render(request, 'index.html')
+
+        # categories = get_categories()
+
+        # 广告
+        contents = {}
+        contentcatagory = ContentCategory.objects.all()
+        for category in contentcatagory:
+            contents[category.key] = category.content_set.filter(status=True)
+
+
+
+        context = {
+            'categories': get_categories(),
+            'contents': contents
+        }
+
+
+
+        return render(request, 'index.html', context)
+
+
+"""
+catagories = {}
+{
+'1': {'channel':[一级数据], 'sub_cats':[二级数据]},
+'2': {}....
+
+}
+"""
